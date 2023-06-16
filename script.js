@@ -1,71 +1,89 @@
 // ==UserScript==
-// @name         My App Login Script
-// @namespace    http://dummy-namespace.example/
-// @version      1.0
-// @description  Enable login button after checking all checkboxes
-// @match        http://dummy-app-url.example/
+// @name         Disable Login Button
+// @namespace    http://tampermonkey.net/
+// @version      0.1
+// @description  try to take over the world!
+// @author       You
+// @match        http://127.0.0.1:5500/website/index.html
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=0.1
 // @grant        none
 // ==/UserScript==
 
 (function() {
     'use strict';
 
-    // Disable the login button initially
-    document.querySelector('button[type="submit"]').disabled = true;
+    // Create the checklist items
+    let items = ['cook', 'eat', 'sleep'];
 
     // Create the checklist button
-    const checklistButton = document.createElement('button');
-    checklistButton.innerHTML = 'Checklist';
-    checklistButton.className = 'btn btn-primary mt-3';
-    checklistButton.onclick = openPopup;
+    let checklistButton = document.createElement('button');
+    checklistButton.textContent = 'Checklist';
+    checklistButton.className = 'w-100 btn btn-lg btn-primary mt-3';
+    checklistButton.style.marginRight = '10px';
 
-    // Inject the checklist button before the login button
-    const loginButton = document.querySelector('button[type="submit"]');
+    // Insert the checklist button to the left of the login button
+    let loginButton = document.querySelector('button[type="submit"]');
     loginButton.parentNode.insertBefore(checklistButton, loginButton);
 
-    function openPopup() {
-        Swal.fire({
-            title: 'Terms and Conditions',
-            html: `
-                <div>
-                    <input type="checkbox" id="checkbox1" onclick="checkAllCheckboxes()"> Cook<br>
-                    <input type="checkbox" id="checkbox2" onclick="checkAllCheckboxes()"> Eat<br>
-                    <input type="checkbox" id="checkbox3" onclick="checkAllCheckboxes()"> Sleep<br>
-                </div>
-            `,
-            showCancelButton: true,
-            confirmButtonText: 'Accept',
-            cancelButtonText: 'Cancel',
-            preConfirm: () => {
-                if (!document.getElementById('checkbox1').checked || !document.getElementById('checkbox2').checked || !document.getElementById('checkbox3').checked) {
-                    Swal.showValidationMessage('Please check all the checkboxes');
-                    return false;
-                }
-            }
-        }).then((result) => {
-            if (result.isConfirmed) {
-                enableLoginButton();
-            }
-        });
-    }
+    // Disable the login button
+    loginButton.disabled = true;
 
-    function checkAllCheckboxes() {
-        const checkbox1 = document.getElementById('checkbox1');
-        const checkbox2 = document.getElementById('checkbox2');
-        const checkbox3 = document.getElementById('checkbox3');
+    // Create the popup window
+    let popup = null;
 
-        if (checkbox1.checked && checkbox2.checked && checkbox3.checked) {
-            enableLoginButton();
-        } else {
-            disableLoginButton();
+    // Add an event listener to the checklist button
+    checklistButton.addEventListener('click', () => {
+        // Open the popup window
+        popup = window.open('', 'Popup Checklist', 'width=200,height=200');
+
+        // Add the checklist to the popup window
+        let list = popup.document.createElement('ul');
+        for (let item of items) {
+            let listItem = popup.document.createElement('li');
+            let checkbox = popup.document.createElement('input');
+            checkbox.type = 'checkbox';
+            listItem.appendChild(checkbox);
+            listItem.appendChild(popup.document.createTextNode(item));
+            list.appendChild(listItem);
         }
-    }
+        popup.document.body.appendChild(list);
 
-    function enableLoginButton() {
-        document.querySelector('button[type="submit"]').disabled = false;
-    }
+        // Create the accept and decline buttons
+        let acceptButton = popup.document.createElement('button');
+        acceptButton.textContent = 'Accept';
+        acceptButton.disabled = true;
+        let declineButton = popup.document.createElement('button');
+        declineButton.textContent = 'Decline';
 
-    function disableLoginButton() {
-        document.querySelector('button[type="submit"]').disabled = true;
-    }
+        // Add an event listener to the accept button
+        acceptButton.addEventListener('click', () => {
+            loginButton.disabled = false;
+            popup.close();
+        });
+
+        // Add an event listener to the decline button
+        declineButton.addEventListener('click', () => {
+            loginButton.disabled = true;
+            popup.close();
+        });
+
+        // Add an event listener to the checkboxes
+        let checkboxes = popup.document.querySelectorAll('input[type="checkbox"]');
+        for (let checkbox of checkboxes) {
+            checkbox.addEventListener('change', () => {
+                let allChecked = true;
+                for (let checkbox of checkboxes) {
+                    if (!checkbox.checked) {
+                        allChecked = false;
+                        break;
+                    }
+                }
+                acceptButton.disabled = !allChecked;
+            });
+        }
+
+        // Add the accept and decline buttons to the popup window
+        popup.document.body.appendChild(acceptButton);
+        popup.document.body.appendChild(declineButton);
+    });
 })();
